@@ -1,0 +1,422 @@
+{
+  "updated": "2026-10-25",
+  "note": "Synthetic data with 0.2%-0.4% relative noise, sampled with seed 20261025.",
+  "datasets": [
+    {
+      "file": "linear.csv",
+      "name": "线性关系",
+      "formula": "y = 2.5x − 1.2",
+      "description": "最简单的入门数据，用于确认训练流程和推理功能。",
+      "x_columns": [
+        "x"
+      ],
+      "y_column": "y",
+      "tags": [
+        "1 变量",
+        "线性"
+      ],
+      "x_units": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "y_units": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "formula_latex": "y = 2.5x - 1.2"
+    },
+    {
+      "file": "damped_oscillator.csv",
+      "name": "阻尼振荡",
+      "formula": "A(t) = 1.5·e^(−0.45t)·cos(2.1t)",
+      "description": "指数衰减包络叠加余弦振荡，需要 exp / cos / mul 等算子。",
+      "x_columns": [
+        "t"
+      ],
+      "y_column": "amplitude",
+      "tags": [
+        "1 变量",
+        "指数",
+        "三角"
+      ],
+      "x_units": [
+        [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "y_units": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "formula_latex": "A(t) = 1.5\\,e^{-0.45t}\\cos(2.1t)"
+    },
+    {
+      "file": "ideal_gas.csv",
+      "name": "理想气体",
+      "formula": "P = nRT / V",
+      "description": "三个输入变量；R 需要由自由常数 c0 学习得到（≈8.314）。",
+      "x_columns": [
+        "V",
+        "T",
+        "n"
+      ],
+      "y_column": "P",
+      "tags": [
+        "3 变量",
+        "物理"
+      ],
+      "x_units": [
+        [
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0
+        ]
+      ],
+      "y_units": [
+        -1,
+        1,
+        -2,
+        0,
+        0,
+        0,
+        0
+      ],
+      "formula_latex": "P = \\frac{nRT}{V}"
+    },
+    {
+      "file": "projectile_range.csv",
+      "name": "抛体射程",
+      "formula": "R = v₀²·sin(2θ) / g",
+      "description": "双变量三角关系，适合观察 sin 与平方项的组合。",
+      "x_columns": [
+        "v0",
+        "theta"
+      ],
+      "y_column": "R",
+      "tags": [
+        "2 变量",
+        "三角"
+      ],
+      "x_units": [
+        [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "y_units": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "formula_latex": "R = \\frac{v_0^2\\sin(2\\theta)}{g}"
+    },
+    {
+      "file": "pendulum_period.csv",
+      "name": "单摆周期",
+      "formula": "T = 2π·√(L/g)",
+      "description": "平方根关系；训练时建议开启标准化或增大自由常数初始尺度。",
+      "x_columns": [
+        "L",
+        "g"
+      ],
+      "y_column": "T",
+      "tags": [
+        "2 变量",
+        "根式"
+      ],
+      "x_units": [
+        [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "y_units": [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "formula_latex": "T = 2\\pi\\sqrt{\\frac{L}{g}}"
+    },
+    {
+      "file": "radioactive_decay.csv",
+      "name": "放射性衰变",
+      "formula": "N = N₀·e^(−λt)",
+      "description": "三变量指数衰减，展示多变量指数规律。",
+      "x_columns": [
+        "t",
+        "N0",
+        "lambda"
+      ],
+      "y_column": "N",
+      "tags": [
+        "3 变量",
+        "指数"
+      ],
+      "x_units": [
+        [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "y_units": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "formula_latex": "N = N_0\\,e^{-\\lambda t}"
+    },
+    {
+      "file": "spring_energy.csv",
+      "name": "弹簧势能",
+      "formula": "E = ½·k·x²",
+      "description": "含自由常数 0.5 的二次关系，可验证常数优化能力。",
+      "x_columns": [
+        "k",
+        "x"
+      ],
+      "y_column": "E",
+      "tags": [
+        "2 变量",
+        "二次"
+      ],
+      "x_units": [
+        [
+          0,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "y_units": [
+        2,
+        1,
+        -2,
+        0,
+        0,
+        0,
+        0
+      ],
+      "formula_latex": "E = \\frac{1}{2} k x^2"
+    },
+    {
+      "file": "coulomb_force.csv",
+      "name": "库仑力",
+      "formula": "F = k·q₁q₂ / r²",
+      "description": "三个输入变量，常数 k≈8.99；适合演示自由常数拟合。",
+      "x_columns": [
+        "q1",
+        "q2",
+        "r"
+      ],
+      "y_column": "F",
+      "tags": [
+        "3 变量",
+        "物理"
+      ],
+      "x_units": [
+        [
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "y_units": [
+        1,
+        1,
+        -2,
+        0,
+        0,
+        0,
+        0
+      ],
+      "formula_latex": "F = \\frac{k q_1 q_2}{r^2}"
+    },
+    {
+      "file": "two_feature.csv",
+      "name": "双变量多项式",
+      "formula": "y = 0.8x₀x₁ + 1.4x₀ − 0.7x₁ + 0.3",
+      "description": "多变量线性与交互项的组合，适合测试变量选择。",
+      "x_columns": [
+        "x0",
+        "x1"
+      ],
+      "y_column": "y",
+      "tags": [
+        "2 变量",
+        "多项式"
+      ],
+      "x_units": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "y_units": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "formula_latex": "y = 0.8x_0x_1 + 1.4x_0 - 0.7x_1 + 0.3"
+    }
+  ]
+}
