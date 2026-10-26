@@ -124,6 +124,10 @@ QPushButton[variant="win"]:hover {{
 QPushButton#WinClose:hover {{
     background: {RED};
 }}
+QWidget#FeatureRow {{
+    background: #FAFAFC;
+    border-radius: 8px;
+}}
 QWidget#Sidebar {{
     background: rgba(255, 255, 255, 0.86);
     border-right: 1px solid {SEPARATOR};

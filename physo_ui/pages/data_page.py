@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QScrollArea,
     QSizePolicy,
+    QSpinBox,
     QStackedWidget,
     QTableWidget,
     QTableWidgetItem,
@@ -120,6 +121,7 @@ class FeatureRow(QWidget):
 
     def __init__(self, column: str, model_name: str, vector, checked: bool, parent=None):
         super().__init__(parent)
+        self.setObjectName("FeatureRow")
         self.column = column
         self.model_name = model_name
         lay = QHBoxLayout(self)
@@ -195,6 +197,8 @@ class DataPage(ScrollPage):
         self._rows: dict[str, FeatureRow] = {}
         self._build()
         self.state.raw_changed.connect(self._on_raw_changed)
+        self.subtitle_label.setVisible(False)
+        self.layout().setSpacing(8)
         self.state.config_changed.connect(self._update_constants_note)
         self._on_raw_changed()
         self._update_constants_note()
@@ -227,7 +231,7 @@ class DataPage(ScrollPage):
         self.body_layout.addStretch(1)
 
     def _build_source_card(self) -> Card:
-        card = Card(padding=14)
+        card = Card(padding=12)
         card.layout.setSpacing(8)
         head = QHBoxLayout()
         head.setSpacing(8)
@@ -251,7 +255,7 @@ class DataPage(ScrollPage):
         return card
 
     def _build_demo_card(self) -> Card:
-        card = Card(padding=14)
+        card = Card(padding=12)
         card.layout.setSpacing(8)
         head = QHBoxLayout()
         head.setSpacing(6)
@@ -275,7 +279,7 @@ class DataPage(ScrollPage):
         f_lay = QVBoxLayout(formula_box)
         f_lay.setContentsMargins(6, 2, 6, 2)
         self.demo_formula = MathLabel("", fontsize=12, min_height=26)
-        self.demo_formula.setFixedHeight(44)
+        self.demo_formula.setFixedHeight(38)
         f_lay.addWidget(self.demo_formula)
         card.layout.addWidget(formula_box)
 
@@ -353,14 +357,6 @@ class DataPage(ScrollPage):
         header.addWidget(self.apply_btn)
         card.layout.addLayout(header)
 
-        self.formula_preview = label("", "Caption", wrap=True)
-        self.formula_preview.setStyleSheet(
-            f"background:{theme.CARD_ALT}; border:1px solid {theme.SEPARATOR}; border-radius:9px;"
-            "padding:7px 9px; font-family:Consolas, 'Cascadia Code', monospace; font-size:11px;"
-        )
-        self.formula_preview.setMaximumHeight(38)
-        self.formula_preview.setVisible(False)
-
         target_bar = QHBoxLayout()
         target_bar.setSpacing(6)
         target_bar.addWidget(label("目标表达式变量 y", "CardTitle"))
@@ -422,12 +418,19 @@ class DataPage(ScrollPage):
         self.feature_scroll.setMinimumHeight(58)
         self.feature_host = QWidget()
         self.feature_layout = QVBoxLayout(self.feature_host)
-        self.feature_layout.setContentsMargins(0, 0, 3, 0)
+        self.feature_layout.setContentsMargins(0, 2, 3, 2)
         self.feature_layout.setSpacing(0)
         self.feature_scroll.setWidget(self.feature_host)
+        self.feature_scroll.viewport().setAutoFillBackground(False)
+        self.feature_scroll.viewport().setObjectName("FeatureViewport")
+        self.feature_scroll.setStyleSheet(
+            "QScrollArea, QWidget#FeatureViewport { background: transparent; border: none; }"
+        )
+        self.feature_host.setAutoFillBackground(False)
         card.layout.addWidget(self.feature_scroll)
-        self.feature_hint = label("", "Caption", wrap=True)
-        self.feature_hint.setVisible(False)
+        self.feature_hint = label("", "Caption", wrap=False)
+        self.feature_hint.setMaximumHeight(18)
+        card.layout.addWidget(self.feature_hint)
 
         constants_row = QHBoxLayout()
         constants_row.setSpacing(6)
@@ -457,11 +460,17 @@ class DataPage(ScrollPage):
         self.da_toggle.toggle.toggled.connect(self._on_selection_changed)
         for widget in (self.split_toggle, self.norm_toggle, self.da_toggle):
             toggles.addWidget(widget, 1)
+        self.split_spin = QSpinBox()
+        self.split_spin.setRange(50, 90)
+        self.split_spin.setSingleStep(5)
+        self.split_spin.setValue(80)
+        self.split_spin.setPrefix("训练 ")
+        self.split_spin.setSuffix(" %")
+        self.split_spin.setFixedWidth(96)
+        self.split_spin.setToolTip("训练集比例；其余作为评估集")
+        self.split_spin.valueChanged.connect(self._on_selection_changed)
+        toggles.addWidget(self.split_spin)
         card.layout.addLayout(toggles)
-
-        self.split_slider = LabeledSlider("训练集比例", 50, 90, 80, suffix=" %", step=5)
-        self.split_slider.valueChanged.connect(self._on_selection_changed)
-        card.layout.addWidget(self.split_slider)
 
         self.selection_info = label("", "Caption", wrap=True)
         self.selection_info.setVisible(False)
@@ -601,7 +610,6 @@ class DataPage(ScrollPage):
         self.preview_stack.setVisible(False)
         self.preview_empty.setVisible(True)
         self.preview_segment.setEnabled(False)
-        self.formula_preview.setText("")
         self.constants_note.setText("")
         self.reset_btn.setEnabled(False)
         self.y_combo.clear()
@@ -725,7 +733,7 @@ class DataPage(ScrollPage):
         self._draw_preview()
 
     def _on_split_toggled(self, checked: bool) -> None:
-        self.split_slider.setEnabled(checked)
+        self.split_spin.setEnabled(checked)
         self._update_info()
 
     def _update_info(self) -> None:
@@ -741,15 +749,13 @@ class DataPage(ScrollPage):
             formula = f"{y} [{format_units(y_unit)}] = f( ? )"
         else:
             formula = "请先导入数据并选择目标变量"
-        self.formula_preview.setText(formula)
         self.feature_hint.setText(
             f"{formula}  ·  已选 {len(x)} / {len(self._rows)} 个特征"
             if self._rows
             else "没有可作为输入特征的数值列"
         )
-        self.feature_hint.setVisible(bool(self._rows))
         self.apply_btn.setEnabled(bool(x and y and self.state.raw is not None and self._rows))
-        self.split_slider.setEnabled(self.split_toggle.isChecked())
+        self.split_spin.setEnabled(self.split_toggle.isChecked())
 
     def _on_preview_mode(self, index: int) -> None:
         self.preview_stack.setCurrentIndex(index)
@@ -852,7 +858,7 @@ class DataPage(ScrollPage):
                 raw,
                 x,
                 y,
-                train_fraction=self.split_slider.value() / 100.0,
+                train_fraction=self.split_spin.value() / 100.0,
                 split_enabled=self.split_toggle.isChecked(),
                 normalize=self.norm_toggle.isChecked(),
                 x_units=x_units,
