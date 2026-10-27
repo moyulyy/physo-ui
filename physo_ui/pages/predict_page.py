@@ -7,16 +7,17 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QDoubleValidator
 from PySide6.QtWidgets import (
     QDoubleSpinBox,
     QFileDialog,
+    QFrame,
     QGridLayout,
     QHBoxLayout,
     QHeaderView,
     QLabel,
     QMessageBox,
     QPushButton,
+    QSizePolicy,
     QStackedWidget,
     QTableWidget,
     QTableWidgetItem,
@@ -95,10 +96,14 @@ class PredictPage(ScrollPage):
         self.stack = QStackedWidget()
         self.stack.addWidget(self._build_single_panel())
         self.stack.addWidget(self._build_batch_panel())
-        lay.addWidget(self.stack, 1)
+        lay.addWidget(self.stack)
+        lay.addStretch(1)
 
     def _build_model_card(self, parent_layout) -> None:
-        card = Card(padding=18)
+        card = Card(padding=14)
+        self.model_card = card
+        card.layout.setSpacing(5)
+        card.setMaximumHeight(188)
         head = QHBoxLayout()
         head.setSpacing(10)
         head.addWidget(section_title("当前模型", "推理使用的表达式"), 1)
@@ -107,15 +112,18 @@ class PredictPage(ScrollPage):
         self.switch_btn.clicked.connect(self.result_requested.emit)
         head.addWidget(self.switch_btn)
         card.layout.addLayout(head)
-        self.expression_math = MathLabel("", fontsize=20, min_height=62)
+        self.expression_math = MathLabel("", fontsize=20, min_height=40)
+        self.expression_math.setMaximumHeight(58)
         self.expression_math.clear_formula("—")
         card.layout.addWidget(self.expression_math)
         self.expression_label = label("", "Caption", wrap=True, selectable=True)
         self.expression_label.setStyleSheet(
             "font-family: Consolas, 'Cascadia Code', monospace; color:#8E8E93;"
         )
-        card.layout.addWidget(self.expression_label)
+        self.expression_label.setMaximumHeight(0)
+        self.expression_label.setVisible(False)
         self.model_units = label("", "Caption", wrap=True)
+        self.model_units.setMaximumHeight(18)
         card.layout.addWidget(self.model_units)
         meta = QHBoxLayout()
         meta.setSpacing(8)
@@ -139,6 +147,7 @@ class PredictPage(ScrollPage):
 
         input_card = Card(padding=18)
         head = QHBoxLayout()
+        head.setSpacing(8)
         head.addWidget(section_title("输入变量", "按原始量纲填写"), 1)
         calc = QPushButton("计算预测  →")
         calc.setProperty("variant", "primary")
@@ -154,40 +163,59 @@ class PredictPage(ScrollPage):
         self.reset_btn.clicked.connect(self._reset_inputs)
         head.addWidget(self.reset_btn)
         input_card.layout.addLayout(head)
+
         self.form_host = QWidget()
+        self.form_host.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
         self.form_layout = QGridLayout(self.form_host)
-        self.form_layout.setContentsMargins(0, 0, 0, 0)
-        self.form_layout.setHorizontalSpacing(16)
-        self.form_layout.setVerticalSpacing(10)
+        self.form_layout.setContentsMargins(0, 2, 0, 2)
+        self.form_layout.setHorizontalSpacing(12)
+        self.form_layout.setVerticalSpacing(12)
         input_card.layout.addWidget(self.form_host)
-        calc = QPushButton("计算预测  →")
-        calc.setProperty("variant", "primary")
-        calc.setMinimumHeight(38)
-        calc.clicked.connect(self._predict_single)
-        input_card.layout.addWidget(calc)
-        lay.addWidget(input_card, 3)
+        hint = label(
+            "变量名显示为原始列名；悬停单位可查看模型变量。修改数值后随时重新计算。",
+            "Caption",
+            wrap=True,
+        )
+        input_card.layout.addWidget(hint)
+        input_card.layout.addStretch(1)
+        lay.addWidget(input_card, 3, Qt.AlignTop)
 
         out_card = Card(padding=18)
         out_card.layout.addWidget(section_title("预测结果", "单点推理"))
+        pred_box = QFrame()
+        pred_box.setStyleSheet(
+            "QFrame { background:#EAF3FF; border:1px solid #D6E8FF; border-radius:14px; }"
+            "QLabel { background:transparent; }"
+        )
+        pv = QVBoxLayout(pred_box)
+        pv.setContentsMargins(16, 12, 16, 12)
+        pv.setSpacing(2)
         self.pred_caption = label("目标变量 y", "Caption")
-        out_card.layout.addWidget(self.pred_caption)
         self.pred_label = QLabel("—")
         self.pred_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.pred_label.setStyleSheet(
-            f"font-size:30px; font-weight:700; color:{theme.BLUE}; padding:4px 0;"
+            f"font-size:34px; font-weight:700; color:{theme.BLUE}; padding:0;"
         )
-        out_card.layout.addWidget(self.pred_label)
+        self.pred_unit = label("", "Caption")
         self.pred_note = label("输入数值后点击「计算预测」。", "Caption", wrap=True)
-        out_card.layout.addWidget(self.pred_note)
+        pv.addWidget(self.pred_caption)
+        pv.addWidget(self.pred_label)
+        pv.addWidget(self.pred_unit)
+        pv.addSpacing(2)
+        pv.addWidget(self.pred_note)
+        out_card.layout.addWidget(pred_box)
+
         self.history_table = QTableWidget()
         self.history_table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.history_table.verticalHeader().setVisible(False)
         self.history_table.setShowGrid(False)
         self.history_table.setAlternatingRowColors(True)
         self.history_table.setMinimumHeight(120)
-        self.history_table.setMaximumHeight(200)
+        self.history_table.setMaximumHeight(180)
         self.history_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         out_card.layout.addWidget(self.history_table)
+        self.history_empty = label("还没有单点预测记录；计算结果会显示在这里。", "Caption", wrap=True)
+        out_card.layout.addWidget(self.history_empty)
         actions = QHBoxLayout()
         actions.addStretch(1)
         self.clear_hist_btn = QPushButton("清空记录")
@@ -200,7 +228,7 @@ class PredictPage(ScrollPage):
         self.export_single_btn.clicked.connect(self._export_single)
         actions.addWidget(self.export_single_btn)
         out_card.layout.addLayout(actions)
-        lay.addWidget(out_card, 2)
+        lay.addWidget(out_card, 2, Qt.AlignTop)
         return panel
 
     def _build_batch_panel(self) -> QWidget:
@@ -263,7 +291,7 @@ class PredictPage(ScrollPage):
         export.setEnabled(False)
         export.clicked.connect(self._export_batch)
         out_card.layout.addWidget(export)
-        lay.addWidget(out_card, 2)
+        lay.addWidget(out_card, 2, Qt.AlignTop)
         return panel
 
     # -------------------------------------------------------------- refresh #
@@ -288,8 +316,12 @@ class PredictPage(ScrollPage):
         self._rebuild_form(result)
         self._history.clear()
         self._refresh_history_table()
-        self.pred_label.setText("—")
-        self.pred_caption.setText(f"目标变量 {result.y_name} [{format_units(result.y_units)}]")
+        self.pred_label.setText("待计算")
+        self.pred_label.setStyleSheet(
+            f"font-size:24px; font-weight:600; color:{theme.GRAY}; padding:6px 0;"
+        )
+        self.pred_caption.setText(f"目标变量 {result.y_name}")
+        self.pred_unit.setText(f"量纲：{format_units(result.y_units)}")
         self.pred_note.setText("输入数值后点击「计算预测」。")
         self._batch_result = None
         self.batch_result_table.clear()
@@ -301,17 +333,30 @@ class PredictPage(ScrollPage):
         clear_layout(self.form_layout)
         self._single_values.clear()
         medians = result.summary.get("x_median") or [0.0] * len(result.x_names)
-        means = result.summary.get("x_mean") or [0.0] * len(result.x_names)
         mins = result.summary.get("x_min") or [None] * len(result.x_names)
         maxs = result.summary.get("x_max") or [None] * len(result.x_names)
         for i, name in enumerate(result.x_names):
-            row = i // 2
-            col = (i % 2) * 2
+            row, col = divmod(i, 2)
             title = result.x_columns[i] if i < len(result.x_columns) else name
             unit_text = format_units(result.x_units[i]) if i < len(result.x_units) else "—"
-            lbl = label(f"{title}  [{unit_text}]", "Caption")
+            field = QFrame()
+            field.setStyleSheet(
+                "QFrame { background:#FAFAFC; border:1px solid #EEEEF3; border-radius:10px; }"
+                "QLabel { background:transparent; border:none; }"
+            )
+            fl = QVBoxLayout(field)
+            fl.setContentsMargins(10, 8, 10, 8)
+            fl.setSpacing(4)
+            top = QHBoxLayout()
+            top.setSpacing(6)
+            title_label = label(title, "CardTitle")
+            title_label.setStyleSheet("font-size:12px;")
             if title != name:
-                lbl.setToolTip(f"模型变量名：{name}")
+                title_label.setToolTip(f"模型变量名：{name}")
+            top.addWidget(title_label)
+            top.addStretch(1)
+            top.addWidget(label(f"[{unit_text}]", "Caption"))
+            fl.addLayout(top)
             spin = QDoubleSpinBox()
             spin.setDecimals(6)
             spin.setRange(-1e12, 1e12)
@@ -325,14 +370,10 @@ class PredictPage(ScrollPage):
                     f"数据范围：{D.format_number(mins[i], 6)} … {D.format_number(maxs[i], 6)}"
                 )
             self._single_values[name] = spin
-            self.form_layout.addWidget(lbl, row * 2, col)
-            self.form_layout.addWidget(spin, row * 2 + 1, col)
-        label_widget = label(
-            "变量名显示为原始列名；若与模型变量名不同，悬停可查看。",
-            "Caption",
-            wrap=True,
-        )
-        self.form_layout.addWidget(label_widget, self.form_layout.rowCount(), 0, 1, 4)
+            fl.addWidget(spin)
+            self.form_layout.addWidget(field, row, col)
+        for c in (0, 1):
+            self.form_layout.setColumnStretch(c, 1)
 
     def _current_X(self) -> np.ndarray:
         result = self.state.result
@@ -351,14 +392,17 @@ class PredictPage(ScrollPage):
             return
         value = float(np.asarray(pred).ravel()[0])
         if not np.isfinite(value):
+            self.pred_label.setStyleSheet(
+                f"font-size:30px; font-weight:700; color:{theme.RED}; padding:0;"
+            )
             self.pred_label.setText("NaN")
             self.pred_note.setText("预测结果不是有限数值，请检查输入是否在表达式定义域内。")
         else:
+            self.pred_label.setStyleSheet(
+                f"font-size:34px; font-weight:700; color:{theme.BLUE}; padding:0;"
+            )
             self.pred_label.setText(D.format_number(value, 8))
-            unit_text = format_units(result.y_units)
-        self.pred_note.setText(
-            f"{result.y_name} [{unit_text}] · 由 {result.active.display_expression}"
-        )
+            self.pred_note.setText(f"由当前公式计算 · {result.active.display_expression}")
         row = {name: self._single_values[name].value() for name in result.x_names}
         row["prediction"] = value
         self._history.append(row)
@@ -383,6 +427,8 @@ class PredictPage(ScrollPage):
             pred_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
             self.history_table.setItem(r, len(result.x_names), pred_item)
         self.export_single_btn.setEnabled(bool(self._history))
+        self.history_table.setVisible(bool(self._history))
+        self.history_empty.setVisible(not bool(self._history))
         if self._history:
             self.history_table.scrollToBottom()
 
